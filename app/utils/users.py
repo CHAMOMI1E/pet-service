@@ -32,24 +32,24 @@ async def get_user_by_email(email: str):
     """ Возвращает информацию о пользователе """
     async with async_session() as session:
         query = await session.execute(select(Users).where(Users.email == email))
-        return query.scalars.first()
+        return query.scalars().first()
 
 
 async def get_user_by_token(token: str):
     """ Возвращает информацию о владельце указанного токена """
-    async with async_session as session:
+    async with async_session() as session:
         try:
             query = await session.execute(
-                select(Tokens).
-                join(Users).
+                select(Users).
+                join(Tokens).
                 where(Tokens.expires > datetime.now(),
                       Tokens.token == token))
-            return query.scalars.first()
+            return query.scalars().first()
         except Exception as e:
             print(e)
 
 
-async def create_user_token(user_id: int):
+async def create_user_token(user_id: int) -> Tokens:
     """ Создает токен для пользователя с указанным user_id """
     async with async_session() as session:
         try:
@@ -58,8 +58,9 @@ async def create_user_token(user_id: int):
                 user_id=user_id,
             )
             session.add(new_user_token)
-            session.commit()
+            await session.commit()
             return new_user_token
+
         except Exception as e:
             print(e)
 
@@ -78,8 +79,10 @@ async def create_user(user: user_schema.UserCreate):
             session.add(user_id)
             await session.commit()
             token = await create_user_token(user_id.id)
-            token_dict = {"token": token["token"], "expires": token["expires"]}
+            print(token.token)
+            token_dict = {"access_token": f"{token.token}",
+                          "expires": f"{token.expires}"}  # Fix here: Use "access_token" instead of "token"
         except Exception as e:
             print(e)
-
-    return {**user.dict(), "id": user_id, "is_active": True, "token": token_dict}
+    return {**user.dict(), "id": user_id.id, "is_active": True,
+            "token": token_dict}  # Fix here: Use user_id.id instead of user_id

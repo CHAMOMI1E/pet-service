@@ -24,8 +24,8 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
     op.create_table(
         "users",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.PrimaryKeyConstraint("id"),
-
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("hashed_password", sa.String(), nullable=False),
@@ -35,24 +35,24 @@ def upgrade() -> None:
             server_default=sa.text("true"),
             nullable=False,
         ),
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
     )
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
     op.create_table(
         "posts",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+
         sa.PrimaryKeyConstraint("id"),
 
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("title", sa.String(), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
     )
     op.create_table(
         "tokens",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.PrimaryKeyConstraint("id"),
-
         sa.Column(
             "token",
             sa.UUID(as_uuid=False),
@@ -61,7 +61,6 @@ def upgrade() -> None:
         ),
         sa.Column("expires", sa.DateTime(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
     )
     op.create_index(op.f("ix_tokens_token"), "tokens", ["token"], unique=True)
